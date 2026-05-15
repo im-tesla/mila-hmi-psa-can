@@ -6,6 +6,12 @@ from fastapi.staticfiles import StaticFiles
 from serial_reader import SerialReader
 import uvicorn
 
+try:
+    from can_parser import parse_frame
+except ImportError:
+    def parse_frame(can_id, data):
+        return {}
+
 app = FastAPI()
 clients: list[WebSocket] = []
 reader = SerialReader()
@@ -23,7 +29,7 @@ async def websocket_endpoint(ws: WebSocket):
 
 
 async def broadcast(frame_json: str):
-    for ws in clients:
+    for ws in clients[:]:
         try:
             await ws.send_text(frame_json)
         except Exception:
@@ -37,7 +43,6 @@ async def can_loop():
     while True:
         frame = await loop.run_in_executor(None, reader.read_frame)
         if frame is not None:
-            from can_parser import parse_frame
             parsed = parse_frame(frame.can_id, frame.data)
             msg = {
                 "id": f"0x{frame.can_id:03X}",
