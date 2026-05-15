@@ -1,4 +1,3 @@
-import struct
 from collections import namedtuple
 
 CanFrame = namedtuple('CanFrame', ['can_id', 'data', 'dlen'])

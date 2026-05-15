@@ -4,14 +4,15 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
-      colors: {
-        'signal-ok': '#16a34a',
-        'signal-warn': '#e07b00',
-        'signal-fault': '#dc2626',
-        'signal-inactive': '#6b7280',
+      fontFamily: {
+        display: ['"Rajdhani"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', '"Cascadia Code"', 'monospace'],
       },
       minHeight: {
-        'touch': '44px',
+        touch: '44px',
+      },
+      boxShadow: {
+        popover: '0 0 0 1px rgba(230,168,23,0.3), 0 8px 32px rgba(0,0,0,0.6)',
       },
     },
   },

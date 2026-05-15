@@ -5,9 +5,12 @@ export function createSearchBar({ onSearch, onCategoryChange }) {
   bar.className = 'px-4 py-3 space-y-3';
   bar.innerHTML = `
     <div class="relative">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg">🔍</span>
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-dim" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
       <input id="signal-search" type="text" placeholder="Search signals, CAN IDs, values..."
-        class="w-full pl-10 pr-4 py-2.5 bg-gray-900 dark:bg-white border border-gray-700 dark:border-gray-300 rounded-xl text-base text-gray-100 dark:text-gray-900 placeholder-gray-600 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 min-h-touch" />
+        class="w-full pl-10 pr-4 py-2.5 font-mono text-sm bg-base border border-base text-primary placeholder-dim focus:outline-none min-h-touch"
+        style="background: var(--bg-base); color: var(--text-primary); border-color: var(--border-color);" />
     </div>
     <div id="category-chips" class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"></div>
   `;
@@ -17,7 +20,7 @@ export function createSearchBar({ onSearch, onCategoryChange }) {
 
   function renderChips() {
     chipsContainer.innerHTML = '';
-    const allChip = createChip('All', activeCategory === 'All');
+    const allChip = createChip('ALL', activeCategory === 'All');
     allChip.addEventListener('click', () => {
       activeCategory = 'All';
       onCategoryChange(null);
@@ -26,7 +29,8 @@ export function createSearchBar({ onSearch, onCategoryChange }) {
     chipsContainer.appendChild(allChip);
 
     for (const section of SECTIONS) {
-      const chip = createChip(section.name, activeCategory === section.name);
+      const chip = createChip(section.code, activeCategory === section.name);
+      chip.title = section.name;
       chip.addEventListener('click', () => {
         activeCategory = section.name;
         onCategoryChange(section);
@@ -39,18 +43,24 @@ export function createSearchBar({ onSearch, onCategoryChange }) {
   renderChips();
 
   const input = bar.querySelector('#signal-search');
-  input.addEventListener('input', (e) => {
-    onSearch(e.target.value.toLowerCase());
-  });
+  input.addEventListener('input', (e) => onSearch(e.target.value.toLowerCase()));
 
   return bar;
 }
 
 function createChip(label, active) {
   const chip = document.createElement('button');
-  chip.className = active
-    ? 'px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white whitespace-nowrap min-h-touch'
-    : 'px-4 py-2 rounded-full text-sm font-medium bg-gray-800 dark:bg-gray-200 text-gray-400 dark:text-gray-600 whitespace-nowrap min-h-touch hover:bg-gray-700 dark:hover:bg-gray-300';
+  if (active) {
+    chip.className = 'px-3 py-1.5 font-mono text-xs font-medium whitespace-nowrap min-h-touch border';
+    chip.style.background = 'var(--accent)';
+    chip.style.color = 'var(--bg-base)';
+    chip.style.borderColor = 'var(--accent)';
+  } else {
+    chip.className = 'px-3 py-1.5 font-mono text-xs font-medium whitespace-nowrap min-h-touch border border-base hover:text-primary';
+    chip.style.background = 'var(--bg-raised)';
+    chip.style.color = 'var(--text-secondary)';
+    chip.style.borderColor = 'var(--border-color)';
+  }
   chip.textContent = label;
   return chip;
 }

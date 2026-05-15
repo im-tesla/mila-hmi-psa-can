@@ -1,3 +1,4 @@
+import './style.css';
 import { initTheme, toggleTheme } from './theme.js';
 import { createWsClient } from './ws-client.js';
 import { updateSignal } from './state.js';
