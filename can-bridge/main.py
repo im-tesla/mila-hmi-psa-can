@@ -5,7 +5,6 @@ import os
 import random
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from serial_reader import SerialReader
 from config import load_config, save_config, get_config, Config
@@ -82,7 +81,6 @@ async def update_config_endpoint(body: ConfigUpdate):
     global _loop_task, _connection_status, _connection_error
 
     cfg = Config(simulation=body.simulation, port=body.port, baudrate=body.baudrate)
-    save_config(cfg)
 
     # Cancel current loop task
     if _loop_task and not _loop_task.done():
@@ -95,23 +93,28 @@ async def update_config_endpoint(body: ConfigUpdate):
     reader.close()
 
     if cfg.simulation:
+        save_config(cfg)
         _connection_status = 'simulation'
         _connection_error = ''
         _loop_task = asyncio.create_task(sim_loop())
+        effective_simulation = True
     else:
         try:
             reader.open(cfg.port, cfg.baudrate)
+            save_config(cfg)
             _connection_status = 'ok'
             _connection_error = ''
             _loop_task = asyncio.create_task(can_loop())
+            effective_simulation = False
         except Exception as e:
             _connection_status = 'error'
             _connection_error = str(e)
-            # Fall back to sim so the UI stays alive
             _loop_task = asyncio.create_task(sim_loop())
+            effective_simulation = True
+            print(f"[WARN] Could not open {cfg.port}: {e} — falling back to simulation")
 
     return {
-        "simulation": cfg.simulation,
+        "simulation": effective_simulation,
         "port": cfg.port,
         "baudrate": cfg.baudrate,
         "status": _connection_status,
@@ -194,12 +197,16 @@ async def sim_loop():
 
 async def can_loop():
     """Read CAN frames from serial and broadcast to WebSocket clients."""
+    global _loop_task, _connection_status, _connection_error
     loop = asyncio.get_event_loop()
     while True:
         try:
             frame = await loop.run_in_executor(None, reader.read_frame)
         except Exception as e:
             print(f"[CAN] Serial read error: {e}")
+            _connection_status = 'error'
+            _connection_error = str(e)
+            _loop_task = asyncio.create_task(sim_loop())
             break
         if frame is not None:
             parsed = parse_frame(frame.can_id, frame.data)

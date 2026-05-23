@@ -6,9 +6,6 @@ CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
 
 _DEFAULTS = {'simulation': True, 'port': '', 'baudrate': 115200}
 
-_config: 'Config | None' = None
-
-
 @dataclass
 class Config:
     simulation: bool
@@ -16,7 +13,10 @@ class Config:
     baudrate: int
 
 
-def get_config() -> 'Config | None':
+_config: Config = Config(**_DEFAULTS)
+
+
+def get_config() -> Config:
     return _config
 
 
