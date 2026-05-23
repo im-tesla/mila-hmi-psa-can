@@ -117,3 +117,15 @@ input:focus {
 .text-warn     { color: var(--signal-warn); }
 .text-fault    { color: var(--signal-fault); }
 .text-mute     { color: var(--signal-mute); }
+
+/* Tab navigation */
+.tab-btn {
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active-tab {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
