@@ -2,51 +2,72 @@ import './style.css';
 import { initTheme, toggleTheme } from './theme.js';
 import { createWsClient } from './ws-client.js';
 import { updateSignal } from './state.js';
-import { createConnectionBar, updateConnectionBar } from './components/connection-bar.js';
+import { createTabBar, updateTabBarConnection } from './components/tab-bar.js';
 import { createSearchBar } from './components/search-bar.js';
 import { createSectionList } from './components/section-list.js';
-import { SECTIONS } from './can-definitions.js';
+import { createSettingsPanel } from './components/settings-panel.js';
+import { createDebugPanel } from './components/debug-panel.js';
 
 initTheme();
 
 const app = document.getElementById('app');
 app.innerHTML = '';
+app.style.display = 'flex';
+app.style.flexDirection = 'column';
+app.style.height = '100vh';
+app.style.overflow = 'hidden';
 
-// Connection bar
-const connBar = createConnectionBar();
-app.appendChild(connBar);
-
-// Theme toggle
+// Tab bar
+const tabBar = createTabBar({ onTabChange: switchTab });
+app.appendChild(tabBar);
 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
-// Search bar
+// --- Dashboard panel ---
+const dashboardPanel = document.createElement('div');
+dashboardPanel.id = 'panel-dashboard';
+dashboardPanel.className = 'flex-1 overflow-auto';
+
 let currentSearch = '';
 let currentCategory = null;
 
 const searchBar = createSearchBar({
-  onSearch: (query) => {
-    currentSearch = query;
-    applyFilters();
-  },
-  onCategoryChange: (section) => {
-    currentCategory = section;
-    applyFilters();
-  },
+  onSearch: (query) => { currentSearch = query; applyFilters(); },
+  onCategoryChange: (section) => { currentCategory = section; applyFilters(); },
 });
-app.appendChild(searchBar);
+dashboardPanel.appendChild(searchBar);
 
-// Section list
 const { container: sectionList, sections } = createSectionList();
-app.appendChild(sectionList);
+dashboardPanel.appendChild(sectionList);
+app.appendChild(dashboardPanel);
 
-// WebSocket
+// --- Debug panel ---
+const { element: debugEl, onFrame } = createDebugPanel();
+debugEl.id = 'panel-debug';
+debugEl.style.display = 'none';
+app.appendChild(debugEl);
+
+// --- Settings panel ---
+const settingsEl = createSettingsPanel();
+settingsEl.id = 'panel-settings';
+settingsEl.style.display = 'none';
+settingsEl.style.flex = '1';
+settingsEl.style.overflowY = 'auto';
+app.appendChild(settingsEl);
+
+// --- Tab switching ---
+function switchTab(tab) {
+  dashboardPanel.style.display = tab === 'dashboard' ? '' : 'none';
+  debugEl.style.display = tab === 'debug' ? '' : 'none';
+  settingsEl.style.display = tab === 'settings' ? '' : 'none';
+}
+
+// --- WebSocket ---
 const wsClient = createWsClient({
-  onStatusChange: (status) => updateConnectionBar(status),
+  onStatusChange: (status) => updateTabBarConnection(status),
   onMessage: (msg) => {
-    const canId = msg.id;
-    const ts = msg.ts;
-    const raw = msg.raw;
+    onFrame(msg);
     if (msg.data) {
+      const { id: canId, ts, raw } = msg;
       for (const [name, value] of Object.entries(msg.data)) {
         updateSignal(canId, name, value, ts, raw);
       }
@@ -56,7 +77,7 @@ const wsClient = createWsClient({
 
 wsClient.connect();
 
-// Filter logic
+// --- Filter logic ---
 function applyFilters() {
   for (const { def, element } of sections) {
     const matchesCategory = !currentCategory || def.name === currentCategory.name;
