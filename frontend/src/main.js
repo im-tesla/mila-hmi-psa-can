@@ -65,6 +65,10 @@ function switchTab(tab) {
 const wsClient = createWsClient({
   onStatusChange: (status) => updateTabBarConnection(status),
   onMessage: (msg) => {
+    if (msg._type === 'status') {
+      if (msg.status === 'error') updateTabBarConnection('disconnected');
+      return;
+    }
     onFrame(msg);
     if (msg.data) {
       const { id: canId, ts, raw } = msg;

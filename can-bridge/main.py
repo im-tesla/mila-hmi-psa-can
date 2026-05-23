@@ -93,7 +93,7 @@ async def update_config_endpoint(body: ConfigUpdate):
     reader.close()
 
     if cfg.simulation:
-        save_config(cfg)
+        await asyncio.get_event_loop().run_in_executor(None, save_config, cfg)
         _connection_status = 'simulation'
         _connection_error = ''
         _loop_task = asyncio.create_task(sim_loop())
@@ -101,7 +101,7 @@ async def update_config_endpoint(body: ConfigUpdate):
     else:
         try:
             reader.open(cfg.port, cfg.baudrate)
-            save_config(cfg)
+            await asyncio.get_event_loop().run_in_executor(None, save_config, cfg)
             _connection_status = 'ok'
             _connection_error = ''
             _loop_task = asyncio.create_task(can_loop())
@@ -206,6 +206,7 @@ async def can_loop():
             print(f"[CAN] Serial read error: {e}")
             _connection_status = 'error'
             _connection_error = str(e)
+            asyncio.create_task(broadcast(json.dumps({"_type": "status", "status": "error", "error": str(e)})))
             _loop_task = asyncio.create_task(sim_loop())
             break
         if frame is not None:
