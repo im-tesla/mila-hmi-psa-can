@@ -16,7 +16,7 @@ class Config:
     baudrate: int
 
 
-def get_config() -> 'Config':
+def get_config() -> 'Config | None':
     return _config
 
 
