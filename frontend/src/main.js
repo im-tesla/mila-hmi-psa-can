@@ -1,6 +1,7 @@
 import './style.css';
 import { initTheme, toggleTheme } from './theme.js';
 import { createWsClient } from './ws-client.js';
+import { initSend } from './can-send.js';
 import { updateSignal } from './state.js';
 import { createTabBar, updateTabBarConnection } from './components/tab-bar.js';
 import { createSearchBar } from './components/search-bar.js';
@@ -78,6 +79,8 @@ const wsClient = createWsClient({
     }
   },
 });
+
+initSend(wsClient.send);
 
 wsClient.connect();
 

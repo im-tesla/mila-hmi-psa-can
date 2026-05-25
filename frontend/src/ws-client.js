@@ -53,5 +53,11 @@ export function createWsClient({ onMessage, onStatusChange }) {
     if (ws) { ws.close(); ws = null; }
   }
 
-  return { connect, disconnect };
+  function send(text) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(text);
+    }
+  }
+
+  return { connect, disconnect, send };
 }
