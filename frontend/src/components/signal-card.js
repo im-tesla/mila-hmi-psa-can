@@ -1,5 +1,7 @@
 import { onSignalChange, getSignal } from '../state.js';
 import { showRawPopover } from './raw-popover.js';
+import { getEnumOptions } from '../can-enum-maps.js';
+import { showSignalEditModal } from './signal-edit-modal.js';
 
 export function createSignalCard(canId, signalName, unit) {
   const card = document.createElement('div');
@@ -28,12 +30,26 @@ export function createSignalCard(canId, signalName, unit) {
   }
 
   let pressTimer;
+  let longPressTriggered = false;
+
   card.addEventListener('pointerdown', () => {
-    pressTimer = setTimeout(() => showRawPopover(canId, signalName, card), 500);
+    longPressTriggered = false;
+    pressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      showRawPopover(canId, signalName, card);
+    }, 500);
   });
   card.addEventListener('pointerup', () => clearTimeout(pressTimer));
-  card.addEventListener('pointerleave', () => clearTimeout(pressTimer));
   card.addEventListener('pointercancel', () => clearTimeout(pressTimer));
+
+  card.addEventListener('click', () => {
+    if (longPressTriggered) return;
+    if (getEnumOptions(canId, signalName)) {
+      showSignalEditModal(canId, signalName);
+    } else {
+      showRawPopover(canId, signalName, card);
+    }
+  });
 
   return card;
 }

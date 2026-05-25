@@ -2,6 +2,10 @@ import { getEnumOptions } from '../can-enum-maps.js';
 import { getSignal } from '../state.js';
 import { sendCanWrite } from '../can-send.js';
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 let activeModal = null;
 let activeBackdrop = null;
 
@@ -34,20 +38,20 @@ export function showSignalEditModal(canId, signalName) {
   modal.innerHTML = `
     <div class="flex items-start justify-between mb-3 pb-2 border-b border-base">
       <div>
-        <div class="text-xs font-bold text-accent tracking-wide uppercase">${signalName}</div>
-        <div class="text-[10px] text-dim">${canId}</div>
+        <div class="text-xs font-bold text-accent tracking-wide uppercase">${esc(signalName)}</div>
+        <div class="text-[10px] text-dim">${esc(canId)}</div>
       </div>
       <button class="dismiss-btn text-dim text-xl leading-none ml-4 hover:text-primary" style="line-height:1">×</button>
     </div>
     <div class="text-[10px] text-dim uppercase tracking-wider mb-1">Current</div>
-    <div class="text-lg font-bold mb-4 ${valueColor(currentValue)}">${currentValue ?? '—'}</div>
+    <div class="text-lg font-bold mb-4 ${valueColor(currentValue)}">${currentValue != null ? esc(currentValue) : '—'}</div>
     <div class="text-[10px] text-dim uppercase tracking-wider mb-2">Set value</div>
     <div class="grid gap-2" style="grid-template-columns: repeat(${cols}, 1fr)">
       ${options.map(o => `
         <button
           class="option-btn py-2 px-3 text-xs font-mono border transition-colors ${String(o.label) === String(currentValue) ? 'border-accent text-accent' : 'border-base text-dim hover:text-primary hover:border-primary'}"
-          data-raw="${o.rawValue}"
-        >${o.label}</button>
+          data-raw="${esc(o.rawValue)}"
+        >${esc(o.label)}</button>
       `).join('')}
     </div>
   `;
