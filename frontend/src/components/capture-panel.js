@@ -126,8 +126,8 @@ export function createCapturePanel() {
   }
 
   function buildCandidateRow({ id, before, after }) {
-    const diffs = byteDiff(before, after);
-    const diffLines = diffs.map(d =>
+    const isNew = before === null;
+    const diffLines = isNew ? '' : byteDiff(before, after).map(d =>
       `<div class="text-[10px] mb-0.5">
         <span class="text-dim">Byte ${d.idx}:</span>
         <span class="text-fault ml-1">${esc(d.before)}</span>
@@ -138,8 +138,8 @@ export function createCapturePanel() {
     return `
       <div class="border border-base p-3 mb-3 bg-card">
         <div class="text-accent font-bold text-sm mb-2">${esc(id)}</div>
-        ${diffLines}
-        <div class="text-[10px] text-dim mt-2">Before: <span class="text-secondary">${esc(before)}</span></div>
+        ${isNew ? '<div class="text-[10px] text-warn mb-1">New frame — not seen during baseline</div>' : diffLines}
+        <div class="text-[10px] text-dim mt-2">Before: <span class="text-secondary">${isNew ? '—' : esc(before)}</span></div>
         <div class="text-[10px] text-dim">After:  <span class="text-primary">${esc(after)}</span></div>
       </div>
     `;
@@ -170,7 +170,6 @@ export function createCapturePanel() {
 
   function startCountdown() {
     clearInterval(countdownTimer);
-    currentRoundSnap = new Map(baselineRaw);
     currentRoundDiffs = new Map();
     phase = 'countdown';
     render();
@@ -178,12 +177,11 @@ export function createCapturePanel() {
     updateCountdownNum(secs);
     countdownTimer = setInterval(() => {
       secs--;
+      updateCountdownNum(secs);
       if (secs <= 0) {
         clearInterval(countdownTimer);
         countdownTimer = null;
-        startCapture();
-      } else {
-        updateCountdownNum(secs);
+        setTimeout(startCapture, 400);
       }
     }, 1000);
   }
@@ -194,6 +192,7 @@ export function createCapturePanel() {
   }
 
   function startCapture() {
+    currentRoundSnap = new Map(baselineRaw);
     phase = 'capturing';
     render();
     startProgress(CAPTURE_MS, '#capture-bar');
@@ -237,7 +236,9 @@ export function createCapturePanel() {
       baselineRaw.set(id, raw);
     } else if (phase === 'capturing') {
       const before = currentRoundSnap.get(id);
-      if (before !== undefined && before !== raw && !noisyIds.has(id)) {
+      if (before === undefined && !noisyIds.has(id)) {
+        currentRoundDiffs.set(id, { before: null, after: raw });
+      } else if (before !== undefined && before !== raw && !noisyIds.has(id)) {
         currentRoundDiffs.set(id, { before, after: raw });
       }
     }
