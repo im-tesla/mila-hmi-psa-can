@@ -11,10 +11,14 @@ from config import load_config, save_config, get_config, Config
 import uvicorn
 
 try:
-    from can_parser import parse_frame
+    from can_parser import parse_frame, encode_signal
+    from can_definitions import CAN_DEFINITIONS
 except ImportError:
     def parse_frame(can_id, data):
         return {}
+    def encode_signal(data, byte_offset, bit_offset, bit_length, raw_value):
+        pass
+    CAN_DEFINITIONS = {}
 
 app = FastAPI()
 clients: list[WebSocket] = []
@@ -23,6 +27,7 @@ reader = SerialReader()
 _loop_task: asyncio.Task | None = None
 _connection_status: str = 'simulation'
 _connection_error: str = ''
+_last_frames: dict[int, bytearray] = {}
 
 
 @app.websocket("/ws")
@@ -31,7 +36,13 @@ async def websocket_endpoint(ws: WebSocket):
     clients.append(ws)
     try:
         while True:
-            await ws.receive_text()
+            text = await ws.receive_text()
+            try:
+                msg = json.loads(text)
+            except Exception:
+                continue
+            if msg.get("type") == "write":
+                await handle_write(msg)
     except WebSocketDisconnect:
         clients.remove(ws)
 
@@ -42,6 +53,44 @@ async def broadcast(frame_json: str):
             await ws.send_text(frame_json)
         except Exception:
             clients.remove(ws)
+
+
+async def handle_write(msg: dict) -> None:
+    try:
+        can_id_str: str = msg["canId"]
+        signal_name: str = msg["signal"]
+        raw_value: int = int(msg["rawValue"])
+    except (KeyError, ValueError, TypeError):
+        return
+
+    try:
+        can_id_int = int(can_id_str, 16)
+    except ValueError:
+        return
+
+    if can_id_int not in CAN_DEFINITIONS:
+        return
+
+    sig_def = next((s for s in CAN_DEFINITIONS[can_id_int] if s[0] == signal_name), None)
+    if sig_def is None:
+        return
+
+    _, byte_off, bit_off, bit_len, *_ = sig_def
+
+    frame_data = bytearray(_last_frames.get(can_id_int, bytearray(8)))
+    encode_signal(frame_data, byte_off, bit_off, bit_len, raw_value)
+    _last_frames[can_id_int] = bytearray(frame_data)
+
+    reader.write_frame(can_id_int, bytes(frame_data))
+
+    parsed = parse_frame(can_id_int, bytes(frame_data))
+    reply = {
+        "id": can_id_str,
+        "ts": time.time(),
+        "data": parsed,
+        "raw": " ".join(f"{b:02X}" for b in frame_data),
+    }
+    asyncio.create_task(broadcast(json.dumps(reply)))
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +233,7 @@ async def sim_loop():
             data[1] = 85 + random.randint(-3, 5)
 
         parsed = parse_frame(can_id, bytes(data))
+        _last_frames[can_id] = bytearray(data)
         msg = {
             "id": f"0x{can_id:03X}",
             "ts": time.time(),
@@ -211,6 +261,7 @@ async def can_loop():
             break
         if frame is not None:
             parsed = parse_frame(frame.can_id, frame.data)
+            _last_frames[frame.can_id] = bytearray(frame.data[:8])
             msg = {
                 "id": f"0x{frame.can_id:03X}",
                 "ts": time.time(),

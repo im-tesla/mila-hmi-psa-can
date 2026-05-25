@@ -59,3 +59,18 @@ class SerialReader:
         padded = bytearray(8)
         padded[:len(data)] = data
         return CanFrame(can_id=can_id, data=bytes(padded), dlen=dlen)
+
+    def write_frame(self, can_id: int, data: bytes) -> bool:
+        """Write one CAN frame to serial. Returns True on success."""
+        if self._ser is None:
+            return False
+        frame = bytearray(8)
+        frame[:len(data)] = data[:8]
+        id_hi = (can_id >> 8) & 0xFF
+        id_lo = can_id & 0xFF
+        packet = bytes([0xAA, id_hi, id_lo, 0x08]) + bytes(frame)
+        try:
+            self._ser.write(packet)
+            return True
+        except Exception:
+            return False
