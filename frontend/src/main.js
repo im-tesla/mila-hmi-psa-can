@@ -8,6 +8,7 @@ import { createSearchBar } from './components/search-bar.js';
 import { createSectionList } from './components/section-list.js';
 import { createSettingsPanel } from './components/settings-panel.js';
 import { createDebugPanel } from './components/debug-panel.js';
+import { createCapturePanel } from './components/capture-panel.js';
 import { SIGNAL_META } from './can-definitions.js';
 
 initTheme();
@@ -48,6 +49,12 @@ debugEl.id = 'panel-debug';
 debugEl.style.display = 'none';
 app.appendChild(debugEl);
 
+// --- Capture/Reverse panel ---
+const { element: captureEl, onFrame: onCaptureFrame } = createCapturePanel();
+captureEl.id = 'panel-reverse';
+captureEl.style.display = 'none';
+app.appendChild(captureEl);
+
 // --- Settings panel ---
 const settingsEl = createSettingsPanel();
 settingsEl.id = 'panel-settings';
@@ -60,6 +67,7 @@ app.appendChild(settingsEl);
 function switchTab(tab) {
   dashboardPanel.style.display = tab === 'dashboard' ? '' : 'none';
   debugEl.style.display = tab === 'debug' ? '' : 'none';
+  captureEl.style.display = tab === 'reverse' ? '' : 'none';
   settingsEl.style.display = tab === 'settings' ? '' : 'none';
 }
 
@@ -72,6 +80,7 @@ const wsClient = createWsClient({
       return;
     }
     onFrame(msg);
+    onCaptureFrame(msg);
     if (msg.data) {
       const { id: canId, ts, raw } = msg;
       for (const [name, value] of Object.entries(msg.data)) {

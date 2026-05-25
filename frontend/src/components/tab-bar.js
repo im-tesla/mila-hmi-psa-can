@@ -10,6 +10,7 @@ export function createTabBar({ onTabChange }) {
     <div class="flex items-center gap-1">
       <button data-tab="dashboard" class="tab-btn active-tab px-3 py-1 text-[10px] uppercase tracking-wider rounded transition-colors">Dashboard</button>
       <button data-tab="debug" class="tab-btn px-3 py-1 text-[10px] uppercase tracking-wider rounded transition-colors">Debug</button>
+      <button data-tab="reverse" class="tab-btn px-3 py-1 text-[10px] uppercase tracking-wider rounded transition-colors">Reverse</button>
       <button data-tab="settings" class="tab-btn px-3 py-1 text-[10px] uppercase tracking-wider rounded transition-colors">Settings</button>
     </div>
     <div class="w-32 flex justify-end">
