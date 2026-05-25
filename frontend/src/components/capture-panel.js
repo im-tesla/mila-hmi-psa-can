@@ -60,6 +60,7 @@ export function createCapturePanel() {
         <div class="w-full bg-raised rounded overflow-hidden" style="height:4px">
           <div id="baseline-bar" class="h-full bg-accent" style="width:0%;transition:none"></div>
         </div>
+        <button id="btn-reset" class="mt-4 text-[10px] text-dim hover:text-primary transition-colors uppercase tracking-wider">✕ Cancel</button>
       </div>
     `;
   }
@@ -90,6 +91,7 @@ export function createCapturePanel() {
       <div class="max-w-lg mx-auto mt-8 px-4 text-center">
         <div class="text-dim text-[10px] uppercase tracking-wider mb-6">Press the button in…</div>
         <div id="countdown-num" class="font-bold text-accent" style="font-size:6rem;line-height:1">3</div>
+        <button id="btn-reset" class="mt-8 text-[10px] text-dim hover:text-primary transition-colors uppercase tracking-wider">✕ Cancel</button>
       </div>
     `;
   }
@@ -102,6 +104,7 @@ export function createCapturePanel() {
         <div class="w-full bg-raised rounded overflow-hidden" style="height:4px">
           <div id="capture-bar" class="h-full bg-warn" style="width:0%;transition:none"></div>
         </div>
+        <button id="btn-reset" class="mt-4 text-[10px] text-dim hover:text-primary transition-colors uppercase tracking-wider">✕ Cancel</button>
       </div>
     `;
   }
@@ -149,6 +152,8 @@ export function createCapturePanel() {
   }
 
   function startBaseline() {
+    clearTimeout(phaseTimer);
+    clearInterval(progressTimer);
     baselineRaw.clear();
     noisyIds.clear();
     roundResults = [];
@@ -164,6 +169,7 @@ export function createCapturePanel() {
   }
 
   function startCountdown() {
+    clearInterval(countdownTimer);
     currentRoundSnap = new Map(baselineRaw);
     currentRoundDiffs = new Map();
     phase = 'countdown';
