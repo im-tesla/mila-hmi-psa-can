@@ -23,26 +23,56 @@ export function createSection(sectionDef) {
   grid.style.background = 'var(--border-color)';
   grid.style.display = 'none';
 
-  header.addEventListener('click', () => {
+  const toggleGrid = () => {
     const isOpen = grid.style.display !== 'none';
     grid.style.display = isOpen ? 'none' : 'grid';
     const chevron = header.querySelector('.chevron-icon');
     chevron.classList.toggle('open', !isOpen);
-  });
+  };
+
+  header.addEventListener('click', toggleGrid);
 
   section.appendChild(header);
   section.appendChild(grid);
 
+  const signalCards = new Map();
+
   for (const [key, meta] of Object.entries(SIGNAL_META)) {
     for (const canId of sectionDef.canIds) {
-      if (meta.canId === canId) {
-        const signalName = key.slice(canId.length + 1);
-        const card = createSignalCard(canId, signalName, meta.unit);
-        grid.appendChild(card);
-        break;
-      }
+      if (meta.canId !== canId) continue;
+      const signalName = key.slice(canId.length + 1);
+      const card = createSignalCard(canId, signalName, meta.unit);
+      grid.appendChild(card);
+      signalCards.set(signalName, card);
+      break;
     }
   }
 
-  return { element: section, grid, header, badgeId };
+  return { 
+    element: section, 
+    grid, 
+    header, 
+    badgeId,
+    highlightSignals: (matchedSignals) => {
+      signalCards.forEach((card, signalName) => {
+        const isMatched = matchedSignals.includes(signalName);
+        if (isMatched) {
+          card.style.borderWidth = '2px';
+          card.style.borderStyle = 'solid';
+          card.style.borderColor = 'var(--accent)';
+          card.style.opacity = '1';
+        } else {
+          card.style.borderWidth = '';
+          card.style.borderStyle = '';
+          card.style.borderColor = '';
+          card.style.opacity = '';
+        }
+      });
+      const hasMatches = matchedSignals.length > 0;
+      if (hasMatches && grid.style.display === 'none') {
+        toggleGrid();
+      }
+    }
+  };
 }
+

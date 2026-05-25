@@ -7,6 +7,7 @@ import { createSearchBar } from './components/search-bar.js';
 import { createSectionList } from './components/section-list.js';
 import { createSettingsPanel } from './components/settings-panel.js';
 import { createDebugPanel } from './components/debug-panel.js';
+import { SIGNAL_META } from './can-definitions.js';
 
 initTheme();
 
@@ -83,17 +84,45 @@ wsClient.connect();
 
 // --- Filter logic ---
 function applyFilters() {
-  for (const { def, element } of sections) {
+  for (const { def, element, highlightSignals } of sections) {
     const matchesCategory = !currentCategory || def.name === currentCategory.name;
     const hasSearchMatch = !currentSearch || sectionMatchesSearch(def, currentSearch);
     element.style.display = (matchesCategory && hasSearchMatch) ? '' : 'none';
+    
+    if (highlightSignals) {
+      const matched = !currentSearch ? [] : getMatchedSignals(def, currentSearch);
+      highlightSignals(matched);
+    }
   }
+}
+
+function getMatchedSignals(sectionDef, query) {
+  const matched = [];
+  for (const canId of sectionDef.canIds) {
+    for (const key of Object.keys(SIGNAL_META)) {
+      if (SIGNAL_META[key].canId !== canId) continue;
+      const signalName = key.slice(canId.length + 1);
+      if (signalName.toLowerCase().includes(query)) {
+        matched.push(signalName);
+      }
+    }
+  }
+  return matched;
 }
 
 function sectionMatchesSearch(sectionDef, query) {
   if (sectionDef.name.toLowerCase().includes(query)) return true;
+  if (sectionDef.code.toLowerCase().includes(query)) return true;
+
   for (const canId of sectionDef.canIds) {
     if (canId.toLowerCase().includes(query)) return true;
+
+    for (const key of Object.keys(SIGNAL_META)) {
+      if (SIGNAL_META[key].canId !== canId) continue;
+      const signalName = key.slice(canId.length + 1);
+      if (signalName.toLowerCase().includes(query)) return true;
+    }
   }
+
   return false;
 }
