@@ -12,7 +12,7 @@ export function createSettingsPanel() {
         <div class="text-dim text-[10px] font-mono mt-0.5">Generate fake CAN data (no hardware needed)</div>
       </div>
       <label class="relative inline-flex items-center cursor-pointer ml-4">
-        <input type="checkbox" id="sim-toggle" class="sr-only peer" checked />
+        <input type="checkbox" id="sim-toggle" class="sr-only peer" />
         <div class="w-10 h-5 bg-raised rounded-full peer
           peer-checked:after:translate-x-5
           after:content-[''] after:absolute after:top-0.5 after:left-0.5

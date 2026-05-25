@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
 
-_DEFAULTS = {'simulation': True, 'port': '', 'baudrate': 115200}
+_DEFAULTS = {'simulation': False, 'port': '', 'baudrate': 115200}
 
 @dataclass
 class Config:
