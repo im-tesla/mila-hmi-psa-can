@@ -36,6 +36,26 @@ def extract_bits(data: bytes, byte_offset: int, bit_offset: int, bit_length: int
     return value
 
 
+def encode_signal(data: bytearray, byte_offset: int, bit_offset: int, bit_length: int, raw_value: int) -> None:
+    """Write a bit field into a bytearray in Motorola (big-endian) format. Modifies data in place."""
+    bits_remaining = bit_length
+    current_byte = byte_offset
+    current_bit = bit_offset
+    shift = bit_length
+
+    while bits_remaining > 0:
+        if current_byte >= len(data):
+            break
+        bits_in_this_byte = min(8 - current_bit, bits_remaining)
+        shift -= bits_in_this_byte
+        chunk = (raw_value >> shift) & ((1 << bits_in_this_byte) - 1)
+        mask = ((1 << bits_in_this_byte) - 1) << current_bit
+        data[current_byte] = (data[current_byte] & (~mask & 0xFF)) | (chunk << current_bit)
+        bits_remaining -= bits_in_this_byte
+        current_bit = 0
+        current_byte += 1
+
+
 def parse_frame(can_id: int, data: bytes) -> dict:
     """Parse a CAN frame into named signal values.
 

@@ -1,6 +1,6 @@
 """Tests for CAN parser and signal definitions."""
 
-from can_parser import parse_frame, extract_bits
+from can_parser import parse_frame, extract_bits, encode_signal
 
 
 def test_extract_bits_simple():
@@ -44,3 +44,46 @@ def test_parse_0x1A1_popup():
 def test_parse_unknown_id():
     result = parse_frame(0xFFF, bytes(8))
     assert result["_unknown"] is True
+
+
+def test_encode_signal_single_bit_set():
+    data = bytearray(8)
+    encode_signal(data, 7, 0, 1, 1)
+    assert data[7] == 0x01
+    assert extract_bits(bytes(data), 7, 0, 1) == 1
+
+
+def test_encode_signal_single_bit_clear():
+    data = bytearray([0xFF] * 8)
+    encode_signal(data, 7, 0, 1, 0)
+    assert data[7] == 0xFE
+    assert extract_bits(bytes(data), 7, 0, 1) == 0
+
+
+def test_encode_signal_preserves_adjacent_bits():
+    data = bytearray([0xFF] * 8)
+    encode_signal(data, 7, 0, 1, 0)
+    for i in range(7):
+        assert data[i] == 0xFF
+    assert data[7] == 0xFE
+
+
+def test_encode_signal_multi_byte():
+    data = bytearray(8)
+    encode_signal(data, 0, 0, 16, 842)
+    assert extract_bits(bytes(data), 0, 0, 16) == 842
+
+
+def test_encode_signal_non_zero_bit_offset():
+    data = bytearray(8)
+    encode_signal(data, 0, 3, 2, 1)
+    assert extract_bits(bytes(data), 0, 3, 2) == 1
+    assert data[0] & 0xE7 == 0
+
+
+def test_encode_signal_roundtrip_enum():
+    data = bytearray([0x42, 0x5E, 0x12, 0x34, 0x56, 0x00, 0x12, 0x80])
+    encode_signal(data, 7, 0, 1, 1)
+    assert extract_bits(bytes(data), 7, 0, 1) == 1
+    encode_signal(data, 7, 0, 1, 0)
+    assert extract_bits(bytes(data), 7, 0, 1) == 0
