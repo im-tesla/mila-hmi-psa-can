@@ -12,8 +12,16 @@ def main():
 
     # Frontend must be built first
     dist = os.path.join(root, "frontend", "dist")
-    if not os.path.exists(os.path.join(dist, "index.html")):
-        print("[BUILD] Frontend not built — running npm build...")
+    assets_dir = os.path.join(dist, "assets")
+    has_js = False
+    if os.path.exists(assets_dir):
+        for f in os.listdir(assets_dir):
+            if f.endswith(".js"):
+                has_js = True
+                break
+
+    if not os.path.exists(os.path.join(dist, "index.html")) or not has_js:
+        print("[BUILD] Frontend not built or incomplete — running npm build...")
         frontend = os.path.join(root, "frontend")
         subprocess.run(["npm", "install"], cwd=frontend, check=True)
         subprocess.run(["npm", "run", "build"], cwd=frontend, check=True)

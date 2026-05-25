@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 import json
 import time
 import os
@@ -20,7 +21,7 @@ app = FastAPI()
 clients: list[WebSocket] = []
 reader = SerialReader()
 
-_loop_task: asyncio.Task | None = None
+_loop_task: Optional[asyncio.Task] = None
 _connection_status: str = 'simulation'
 _connection_error: str = ''
 
