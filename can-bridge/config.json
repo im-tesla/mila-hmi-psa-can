@@ -1,5 +1,5 @@
 {
   "simulation": false,
-  "port": "COM3",
+  "port": "/dev/cu.wchusbserial5B140857211",
   "baudrate": 115200
 }

@@ -9,9 +9,9 @@ export function createSectionList() {
   const sections = [];
 
   for (const sectionDef of SECTIONS) {
-    const { element } = createSection(sectionDef);
-    container.appendChild(element);
-    sections.push({ def: sectionDef, element });
+    const sectionData = createSection(sectionDef);
+    container.appendChild(sectionData.element);
+    sections.push({ def: sectionDef, element: sectionData.element, highlightSignals: sectionData.highlightSignals });
   }
 
   return { container, sections };
